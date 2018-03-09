@@ -2,7 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-class Speedometer(QWidget):
+class Dial(QWidget):
 
     def __init__(self, title, unit, min, max, green, yellow, red, pc, parent=None):
         QWidget.__init__(self, parent)
@@ -126,7 +126,7 @@ class Speedometer(QWidget):
         leftPos = -1 * speedWidth + 50
         leftDecPos = leftPos + speedWidth
         topPos = 10
-        topDecPos = 10
+        topDecPos = 100
         painter.setPen(self.speedTextColor)
         painter.setFont(speedFont)
         painter.drawText(leftPos, topPos, s_SpeedInt)

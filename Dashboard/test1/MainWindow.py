@@ -8,7 +8,7 @@ import sys, os, glob
 import pickle
 from TablePrototype import TableWindow, TableModel
 from TablePrototype import ModelVE, ModelSA
-from Speedometer import Speedometer
+from Dial import Dial
 import serial
 import random
 
@@ -25,7 +25,9 @@ class MainWindow(QMainWindow):
         self.currentport = ""
 
         layout = QGridLayout(self.ui.centralwidget)
+        layout.setHorizontalSpacing( 1 )
         self.ui.centralwidget.setLayout(layout)
+                  
 
         try:
             self.vetable = pickle.load(open("tuningve.smv", "rb"))
@@ -51,28 +53,35 @@ class MainWindow(QMainWindow):
         self.tps_value = 0
         self.temp_value = 0
         self.batt_value = 0
-        self.map_value = 0
+        self.boost_value = 0
+        self.afr_value = 0
         self.meters = []
         
-        rpm = Speedometer("RPM", "", 1, 8000, 0.98, 0.20, 0,1)
+        rpm = Dial("RPM", "", 1, 8000, 0.98, 0.20, 0,1)
         self.meters.append(rpm)
         layout.addWidget(rpm, 0, 0)
         
-        tps = Speedometer("TPS", "", 0, 100, 0.98, 0.20, 0,1)
+        tps = Dial("TPS", "", 0, 100, 0.98, 0.20, 0,1)
         self.meters.append(tps)
         layout.addWidget(tps, 0, 1)
 
-        temp = Speedometer("TEMP", "", 0, 120, 0.98, 0.20, 0,1.5)
+        layout.setHorizontalSpacing( 1 )
+
+        temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1.8)
         self.meters.append(temp)
         layout.addWidget(temp, 1, 0)
         
-        batt = Speedometer("BATT", "", 0, 15, 0.98, 0.20, 0,1.5)
+        batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1.8)
         self.meters.append(batt)
         layout.addWidget(batt, 1, 1)
 
-        map = Speedometer("MAP", "", 0, 100, 0.98, 0.20, 0,1.5)
-        self.meters.append(map)
-        layout.addWidget(map, 1, 2)
+        boost = Dial("MAP", "", 0, 30, 0.98, 0.20, 0,1.8)
+        self.meters.append(boost)
+        layout.addWidget(boost, 1, 2)
+        
+        afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1.8)
+        self.meters.append(afr)
+        layout.addWidget(afr, 1, 3)
 
         QTimer.singleShot(5, self.increment)
 
@@ -88,6 +97,18 @@ class MainWindow(QMainWindow):
         self.temp_value = (self.temp_value + random.randint(0,1)) % 120
         temp = self.meters[2]
         temp.setSpeed(self.temp_value)
+        
+        self.batt_value = (self.batt_value + random.randint(0,1)/10) % 15
+        batt = self.meters[3]
+        batt.setSpeed(self.batt_value)
+        
+        self.boost_value = (self.boost_value + random.randint(0,1)/10) % 30
+        boost = self.meters[4]
+        boost.setSpeed(self.boost_value)
+        
+        self.afr_value = (self.afr_value + random.randint(0,1)/10) % 20
+        afr = self.meters[5]
+        afr.setSpeed(self.afr_value)
          
         QTimer.singleShot(5, self.increment) 
 
