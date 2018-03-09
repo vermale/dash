@@ -60,16 +60,16 @@ class MainWindow(QMainWindow):
         self.meters = []
         
         rpm = Dial("RPM", "", 1, 8000, 0.98, 0.20, 0,1 )
-        rpm.setFixedWidth(20)
         self.meters.append(rpm)
-        
+        layout.setRowStretch(0,0)
+        layout.setColumnStretch(0,0)
         layout.addWidget(rpm, 0, 0, 1, 2 )
         
         tps = Dial("TPS", "", 0, 100, 0.98, 0.20, 0,1)
         self.meters.append(tps)
         layout.addWidget(tps, 0, 2, 1, 2)
 
-        layout.setHorizontalSpacing( 1 )
+
 
         temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1.8)
         self.meters.append(temp)
@@ -87,10 +87,10 @@ class MainWindow(QMainWindow):
         self.meters.append(afr)
         layout.addWidget(afr, 1, 3)
 
-        QTimer.singleShot(5, self.increment)
+        QTimer.singleShot(1, self.increment)
 
     def increment(self):
-        self.rpm_value = (self.rpm_value + random.randint(0,100)) % 8000
+        self.rpm_value = (self.rpm_value + 100) % 8000
         rpm = self.meters[0]
         rpm.setSpeed(self.rpm_value)
         
@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
         afr = self.meters[5]
         afr.setSpeed(self.afr_value)
          
-        QTimer.singleShot(5, self.increment) 
+        QTimer.singleShot(1, self.increment) 
 
     def openVE(self):
         self.vewindow.show()
