@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5 import QtCore
+from PyQt5 import *
 
 
 from ui_mainwindow import Ui_MainWindow
@@ -11,6 +11,7 @@ from TablePrototype import ModelVE, ModelSA
 from Dial import Dial
 import serial
 import random
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -23,11 +24,12 @@ class MainWindow(QMainWindow):
         self.ui.actionSpark_Advance.triggered.connect(self.openSA)
 
         self.currentport = ""
-
+        
         layout = QGridLayout(self.ui.centralwidget)
-        layout.setHorizontalSpacing( 1 )
+        
+                
         self.ui.centralwidget.setLayout(layout)
-                  
+                          
 
         try:
             self.vetable = pickle.load(open("tuningve.smv", "rb"))
@@ -57,13 +59,15 @@ class MainWindow(QMainWindow):
         self.afr_value = 0
         self.meters = []
         
-        rpm = Dial("RPM", "", 1, 8000, 0.98, 0.20, 0,1)
+        rpm = Dial("RPM", "", 1, 8000, 0.98, 0.20, 0,1 )
+        rpm.setFixedWidth(20)
         self.meters.append(rpm)
-        layout.addWidget(rpm, 0, 0)
+        
+        layout.addWidget(rpm, 0, 0, 1, 2 )
         
         tps = Dial("TPS", "", 0, 100, 0.98, 0.20, 0,1)
         self.meters.append(tps)
-        layout.addWidget(tps, 0, 1)
+        layout.addWidget(tps, 0, 2, 1, 2)
 
         layout.setHorizontalSpacing( 1 )
 
