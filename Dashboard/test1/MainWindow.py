@@ -11,7 +11,8 @@ from TablePrototype import ModelVE, ModelSA
 from Dial import Dial
 import serial
 import random
-
+import can
+from warnings import catch_warnings
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -38,6 +39,7 @@ class MainWindow(QMainWindow):
         self.meters = []
         
         
+        
         temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1)
         self.meters.append(temp)
         layout.addWidget(temp, 0, 0)
@@ -54,7 +56,14 @@ class MainWindow(QMainWindow):
         self.meters.append(afr)
         layout.addWidget(afr, 1, 1)
 
+        try:
+            self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
+        except: 
+            print("Erreur lors de la conversion de l'année.")
+
         QTimer.singleShot(1, self.increment)
+        
+        
 
     def increment(self):
         
@@ -73,8 +82,14 @@ class MainWindow(QMainWindow):
         self.afr_value = (self.afr_value + random.randint(0,1)/10) % 20
         afr = self.meters[3]
         afr.setSpeed(self.afr_value)
+        
+        try:
+            message = bus.recv()
+        except:
+            print("no message")
+        
          
-        QTimer.singleShot(1, self.increment) 
+        QTimer.singleShot(10, self.increment) 
 
     def openVE(self):
         self.vewindow.show()
