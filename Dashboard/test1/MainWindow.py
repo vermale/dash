@@ -26,92 +26,52 @@ class MainWindow(QMainWindow):
         self.currentport = ""
         
         layout = QGridLayout(self.ui.centralwidget)
+        layout.setContentsMargins(1,1,1,1)
+        layout.setColumnMinimumWidth(1,1)
         
-                
         self.ui.centralwidget.setLayout(layout)
                           
-
-        try:
-            self.vetable = pickle.load(open("tuningve.smv", "rb"))
-        except FileNotFoundError:
-            print("No existing tuning found!")
-            self.vetable = ModelVE()
-
-        try:
-            self.satable = pickle.load(open("tuningsa.smv", "rb"))
-        except FileNotFoundError:
-            print("No existing tuning found!")
-            self.satable = ModelSA()
-
-        self.vemodel = TableModel(self.vetable)
-        self.vewindow = TableWindow("Volumetric Efficiency Table")
-        self.vewindow.setModel(self.vemodel)
-
-        self.samodel = TableModel(self.satable)
-        self.sawindow = TableWindow("Spark Advance Table")
-        self.sawindow.setModel(self.samodel)
-
-        self.rpm_value = 0
-        self.tps_value = 0
         self.temp_value = 0
         self.batt_value = 0
         self.boost_value = 0
         self.afr_value = 0
         self.meters = []
         
-        rpm = Dial("RPM", "", 1, 8000, 0.98, 0.20, 0,1 )
-        self.meters.append(rpm)
-        layout.setRowStretch(0,0)
-        layout.setColumnStretch(0,0)
-        layout.addWidget(rpm, 0, 0, 1, 2 )
         
-        tps = Dial("TPS", "", 0, 100, 0.98, 0.20, 0,1)
-        self.meters.append(tps)
-        layout.addWidget(tps, 0, 2, 1, 2)
-
-
-
-        temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1.8)
+        temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1)
         self.meters.append(temp)
-        layout.addWidget(temp, 1, 0)
+        layout.addWidget(temp, 0, 0)
         
-        batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1.8)
+        batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1)
         self.meters.append(batt)
-        layout.addWidget(batt, 1, 1)
+        layout.addWidget(batt, 0, 1)
 
-        boost = Dial("MAP", "", 0, 30, 0.98, 0.20, 0,1.8)
+        boost = Dial("MAP", "", 0, 30, 0.98, 0.20, 0,1)
         self.meters.append(boost)
-        layout.addWidget(boost, 1, 2)
+        layout.addWidget(boost, 1, 0)
         
-        afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1.8)
+        afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
         self.meters.append(afr)
-        layout.addWidget(afr, 1, 3)
+        layout.addWidget(afr, 1, 1)
 
         QTimer.singleShot(1, self.increment)
 
     def increment(self):
-        self.rpm_value = (self.rpm_value + 100) % 8000
-        rpm = self.meters[0]
-        rpm.setSpeed(self.rpm_value)
-        
-        self.tps_value = (self.tps_value + random.randint(0,1)) % 100
-        tps = self.meters[1]
-        tps.setSpeed(self.tps_value)
         
         self.temp_value = (self.temp_value + random.randint(0,1)) % 120
-        temp = self.meters[2]
+        temp = self.meters[0]
         temp.setSpeed(self.temp_value)
         
         self.batt_value = (self.batt_value + random.randint(0,1)/10) % 15
-        batt = self.meters[3]
+        batt = self.meters[1]
         batt.setSpeed(self.batt_value)
         
         self.boost_value = (self.boost_value + random.randint(0,1)/10) % 30
-        boost = self.meters[4]
+        boost = self.meters[2]
         boost.setSpeed(self.boost_value)
         
         self.afr_value = (self.afr_value + random.randint(0,1)/10) % 20
-        afr = self.meters[5]
+        afr = self.meters[3]
         afr.setSpeed(self.afr_value)
          
         QTimer.singleShot(1, self.increment) 
