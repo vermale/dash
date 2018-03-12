@@ -13,6 +13,9 @@ import serial
 import random
 import can
 from warnings import catch_warnings
+import matplotlib.path as mpath
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -36,6 +39,7 @@ class MainWindow(QMainWindow):
         self.batt_value = 0
         self.boost_value = 0
         self.afr_value = 0
+        self.message =""
         self.meters = []
         
         
@@ -64,6 +68,23 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(1, self.increment)
         
         
+       
+
+        Path = mpath.Path
+        
+        fig, ax = plt.subplots()
+        pp1 = mpatches.PathPatch(
+            Path([(0, 0), (1, 0), (1, 1), (0, 0)],
+                 [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
+            fc="none", transform=ax.transData)
+        
+        ax.add_patch(pp1)
+        ax.plot([0.75], [0.25], "ro")
+        ax.set_title('The red point should be on the path')
+        
+        plt.show()
+        
+        
 
     def increment(self):
         
@@ -84,10 +105,10 @@ class MainWindow(QMainWindow):
         afr.setSpeed(self.afr_value)
         
         try:
-            message = bus.recv()
+            self.message = self.bus.recv()
         except:
-            print("no message")
-        
+            print("No message")
+        print(self.message)
          
         QTimer.singleShot(10, self.increment) 
 
