@@ -16,6 +16,7 @@ from warnings import catch_warnings
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import CanProtocol
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -66,9 +67,9 @@ class MainWindow(QMainWindow):
             print("Erreur lors de la conversion de l'année.")
 
         QTimer.singleShot(1, self.increment)
-        
-        
-       
+             
+             
+        CanData = CanProtocol('300','TPS', 'Engine speed', 'rpm', 'ushort', 0, 1, 50, 0, 0, 10000, 10000 )
 
         Path = mpath.Path
         
