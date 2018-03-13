@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import *
 
-
+from pylab import plot, xlabel, ylabel, title, grid, show
 from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 import pickle
@@ -13,12 +13,38 @@ import serial
 import random
 import can
 from warnings import catch_warnings
+import CanProtocol
+import graph
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-import CanProtocol
 
+import numpy
+
+def clickable(widget):
+      
+    class Filter(QObject):
+        
+        clicked = pyqtSignal()
+           
+        def eventFilter(self, obj, event):
+           
+            if obj == widget:
+                if event.type() == QEvent.MouseButtonRelease:
+                    if obj.rect().contains(event.pos()):
+                        self.clicked.emit()
+                        # The developer can opt for .emit(obj) to get the object within the slot.
+                        return True
+            return False
+    filter = Filter(widget)
+    widget.installEventFilter(filter)
+    return filter.clicked
+   
+   
 class MainWindow(QMainWindow):
+    
+    
+    TempList = []
+    
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -43,23 +69,33 @@ class MainWindow(QMainWindow):
         self.message =""
         self.meters = []
         
+        graphBatt = graph.graphBatt
+        graphAfr = graph.graphAfr
+        graphBoost = graph.graphBoost     
         
         
         temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1)
+        clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
         layout.addWidget(temp, 0, 0)
         
         batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1)
+        clickable(batt).connect(graphBatt)
         self.meters.append(batt)
         layout.addWidget(batt, 0, 1)
 
         boost = Dial("MAP", "", 0, 30, 0.98, 0.20, 0,1)
+        clickable(boost).connect(graphBoost)
         self.meters.append(boost)
         layout.addWidget(boost, 1, 0)
         
         afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
+        clickable(afr).connect(graphAfr)
         self.meters.append(afr)
         layout.addWidget(afr, 1, 1)
+        
+             
+        
 
         try:
             self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
@@ -67,24 +103,22 @@ class MainWindow(QMainWindow):
             print("Erreur lors de la conversion de l'année.")
 
         QTimer.singleShot(1, self.increment)
-             
-             
-        CanData = CanProtocol('300','TPS', 'Engine speed', 'rpm', 'ushort', 0, 1, 50, 0, 0, 10000, 10000 )
-
-        Path = mpath.Path
+       
+       
+    def graphTemp(self):
         
-        fig, ax = plt.subplots()
-        pp1 = mpatches.PathPatch(
-            Path([(0, 0), (1, 0), (1, 1), (0, 0)],
-                 [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
-            fc="none", transform=ax.transData)
+        t = numpy.arange(0.0, len(self.TempList), 1)
+        s = self.TempList
+        plot(t, s)
+         
+        xlabel('time (s)')
+        ylabel('Temperature')
+        title('Water C°')
+        grid(True)
+        show()
         
-        ax.add_patch(pp1)
-        ax.plot([0.75], [0.25], "ro")
-        ax.set_title('The red point should be on the path')
-        
-        plt.show()
-        
+     
+            
         
 
     def increment(self):
@@ -92,6 +126,7 @@ class MainWindow(QMainWindow):
         self.temp_value = (self.temp_value + random.randint(0,1)) % 120
         temp = self.meters[0]
         temp.setSpeed(self.temp_value)
+        self.TempList.append(self.temp_value)
         
         self.batt_value = (self.batt_value + random.randint(0,1)/10) % 15
         batt = self.meters[1]
