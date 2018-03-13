@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
        
     def graphTemp(self):
         
-        t = numpy.arange(0.0, len(self.TempList), 1)
+        t = numpy.arange(0.0, len(self.TempList), 1) 
         s = self.TempList
         plot(t, s)
          
