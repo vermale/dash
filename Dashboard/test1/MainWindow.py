@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import *
 
-from pylab import plot, xlabel, ylabel, title, grid, show
+from pylab import *
 from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 import pickle
@@ -14,11 +14,12 @@ import random
 import can
 from warnings import catch_warnings
 import CanProtocol
-import graph
+
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 
 import numpy
+from matplotlib import pyplot
 
 def clickable(widget):
       
@@ -44,6 +45,11 @@ class MainWindow(QMainWindow):
     
     
     TempList = []
+    AfrList = []
+    BoostList = []
+    BattList = []
+    TempWin = pyplot
+    
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -69,10 +75,6 @@ class MainWindow(QMainWindow):
         self.message =""
         self.meters = []
         
-        graphBatt = graph.graphBatt
-        graphAfr = graph.graphAfr
-        graphBoost = graph.graphBoost     
-        
         
         temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1)
         clickable(temp).connect(self.graphTemp)
@@ -80,21 +82,20 @@ class MainWindow(QMainWindow):
         layout.addWidget(temp, 0, 0)
         
         batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1)
-        clickable(batt).connect(graphBatt)
+        clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
         layout.addWidget(batt, 0, 1)
 
         boost = Dial("MAP", "", 0, 30, 0.98, 0.20, 0,1)
-        clickable(boost).connect(graphBoost)
+        clickable(boost).connect(self.graphBoost)
         self.meters.append(boost)
         layout.addWidget(boost, 1, 0)
         
         afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
-        clickable(afr).connect(graphAfr)
+        clickable(afr).connect(self.graphAfr)
         self.meters.append(afr)
-        layout.addWidget(afr, 1, 1)
+        layout.addWidget(afr, 1, 1)   
         
-             
         
 
         try:
@@ -117,7 +118,40 @@ class MainWindow(QMainWindow):
         grid(True)
         show()
         
-     
+                
+    def graphBatt(self):
+        
+        t = numpy.arange(0.0, len(self.BattList), 1) 
+        s = self.BattList
+        plot(t, s)
+         
+        xlabel('time (s)')
+        ylabel('Volt')
+        title('Voltage V')
+        grid(True)
+        show()
+        
+    def graphBoost(self):
+        
+        t = numpy.arange(0.0, len(self.BoostList), 1) 
+        s = self.BoostList
+        plot(t, s)
+        xlabel('time (s)')
+        ylabel('Boost')
+        title('Boost mbar')
+        grid(True)
+        show()
+        
+    def graphAfr(self):
+        
+        t = numpy.arange(0.0, len(self.AfrList), 1) 
+        s = self.AfrList
+        plot(t, s)
+        xlabel('time (s)')
+        ylabel('AFR')
+        title('Afr')
+        grid(True)
+        show()    
             
         
 
@@ -131,14 +165,17 @@ class MainWindow(QMainWindow):
         self.batt_value = (self.batt_value + random.randint(0,1)/10) % 15
         batt = self.meters[1]
         batt.setSpeed(self.batt_value)
+        self.BattList.append(self.batt_value)
         
         self.boost_value = (self.boost_value + random.randint(0,1)/10) % 30
         boost = self.meters[2]
         boost.setSpeed(self.boost_value)
+        self.BoostList.append(self.boost_value)
         
         self.afr_value = (self.afr_value + random.randint(0,1)/10) % 20
         afr = self.meters[3]
         afr.setSpeed(self.afr_value)
+        self.AfrList.append(self.afr_value)
         
         try:
             self.message = self.bus.recv()
