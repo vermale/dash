@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import *
 
+
 from pylab import *
 from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
@@ -16,10 +17,13 @@ from warnings import catch_warnings
 import CanProtocol
 
 import matplotlib.path as mpath
-import matplotlib.patches as mpatches
 
 import numpy
+
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
+
+
 
 def clickable(widget):
       
@@ -59,12 +63,15 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.actionVolumetric_Efficiency.triggered.connect(self.openVE)
         self.ui.actionSpark_Advance.triggered.connect(self.openSA)
-
         self.currentport = ""
         
         layout = QGridLayout(self.ui.centralwidget)
         layout.setContentsMargins(1,1,1,1)
         layout.setColumnMinimumWidth(1,1)
+        
+        
+        cor = Qt.Corner
+        layout.setOriginCorner(cor)
         
         self.ui.centralwidget.setLayout(layout)
                           
@@ -96,7 +103,7 @@ class MainWindow(QMainWindow):
         self.meters.append(afr)
         layout.addWidget(afr, 1, 1)   
         
-        
+               
 
         try:
             self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
@@ -110,7 +117,15 @@ class MainWindow(QMainWindow):
         
         t = numpy.arange(0.0, len(self.TempList), 1) 
         s = self.TempList
-        plot(t, s)
+        
+        figure(figsize=(9.5,5.5))
+        thismanager = get_current_fig_manager()
+        thismanager.window.wm_geometry("+0+0")    
+        
+               
+        
+        plot(t, s, color="red", linewidth=2.5, linestyle="-")
+
          
         xlabel('time (s)')
         ylabel('Temperature')
@@ -180,7 +195,7 @@ class MainWindow(QMainWindow):
         try:
             self.message = self.bus.recv()
         except:
-            print("No message")
+            print("")
         print(self.message)
          
         QTimer.singleShot(10, self.increment) 
