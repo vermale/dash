@@ -52,7 +52,6 @@ class CanTool:
                 if ( canid == '300' ):
                     val = int(data[9:10],16)*256+int(data[11:12],16)
                     self.Map = val/1000
-                    print(self.Map)
                 if ( canid == '301' ):
                     self.Lambda2 = ((int(data[2:3],16)*2)/255)*14.7
                 if ( canid == '305' ):

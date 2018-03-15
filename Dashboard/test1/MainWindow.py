@@ -1,30 +1,29 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5 import *
+#from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QMainWindow, QGridLayout
+#from PyQt5.QtCore import *
+from PyQt5.QtCore import QObject, pyqtSignal, QEvent, QTimer
+#from PyQt5 import *
 
 
 from pylab import *
 from ui_mainwindow import Ui_MainWindow
-import sys, os, glob
-import pickle
-from TablePrototype import TableWindow, TableModel
-from TablePrototype import ModelVE, ModelSA
+#import sys, os, glob
+#import pickle
+#from TablePrototype import TableWindow, TableModel
+#from TablePrototype import ModelVE, ModelSA
 from Dial import Dial
 import serial
-import random
+#import random
 import can
-from warnings import catch_warnings
+#from warnings import catch_warnings
 import CanProtocol
 
-import matplotlib.path as mpath
+#mport matplotlib.path as mpath
 
 import numpy
 
 from matplotlib import pyplot
-import matplotlib.pyplot as plt
-import CanProtocol
-
-
+#mport matplotlib.pyplot as plt
 
 
 def clickable(widget):
@@ -116,12 +115,12 @@ class MainWindow(QMainWindow):
         self.BattList.append(0)
         self.BattList.append(18)
 
-        try:
-            self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
-        except: 
-            print("Erreur lors de la conversion de l'année.")
+        #try:
+        #    self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
+        #except: 
+        #    print("Erreur lors de la conversion de l'année.")
 
-        QTimer.singleShot(1, self.increment)
+        QTimer.singleShot(10, self.increment)
        
     
     def on_click(self,event):
@@ -227,7 +226,7 @@ class MainWindow(QMainWindow):
         except:
             a =0
              
-        QTimer.singleShot(10, self.increment)
+        QTimer.singleShot(100, self.increment)
         
         
     def fileRead(self):        
@@ -238,6 +237,7 @@ class MainWindow(QMainWindow):
             close(self.file) 
             self.file = open('candata.txt','r')   
             self.line = self.file.readline()
+            
                 
 
     def openVE(self):
