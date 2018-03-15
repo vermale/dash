@@ -69,9 +69,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(1,1,1,1)
         layout.setColumnMinimumWidth(1,1)
         
-        
-        cor = Qt.Corner
-        layout.setOriginCorner(cor)
+        self.move(0,0)
         
         self.ui.centralwidget.setLayout(layout)
                           
@@ -103,7 +101,7 @@ class MainWindow(QMainWindow):
         self.meters.append(afr)
         layout.addWidget(afr, 1, 1)   
         
-               
+        
 
         try:
             self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
@@ -112,25 +110,29 @@ class MainWindow(QMainWindow):
 
         QTimer.singleShot(1, self.increment)
        
+    
+    def on_click(self,event):
+        # get the x and y coords, flip y from top to bottom
+        if event.button == 1:
+            ioff()
+            close()
+           
        
     def graphTemp(self):
         
         t = numpy.arange(0.0, len(self.TempList), 1) 
         s = self.TempList
         
-        figure(figsize=(9.5,5.5))
+        figure(num="Temp",figsize=(9.5,5.5))
         thismanager = get_current_fig_manager()
-        thismanager.window.wm_geometry("+0+0")    
-        
-               
-        
+        thismanager.window.wm_geometry("+0+0")                            
         plot(t, s, color="red", linewidth=2.5, linestyle="-")
-
          
         xlabel('time (s)')
         ylabel('Temperature')
         title('Water C°')
         grid(True)
+        connect('button_press_event', self.on_click)
         show()
         
                 
@@ -138,34 +140,46 @@ class MainWindow(QMainWindow):
         
         t = numpy.arange(0.0, len(self.BattList), 1) 
         s = self.BattList
+        figure(figsize=(9.5,5.5))
+        thismanager = get_current_fig_manager()
+        thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
          
         xlabel('time (s)')
         ylabel('Volt')
         title('Voltage V')
         grid(True)
+        connect('button_press_event', self.on_click)
         show()
         
     def graphBoost(self):
         
         t = numpy.arange(0.0, len(self.BoostList), 1) 
         s = self.BoostList
+        figure(figsize=(9.5,5.5))
+        thismanager = get_current_fig_manager()
+        thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
         xlabel('time (s)')
         ylabel('Boost')
         title('Boost mbar')
         grid(True)
+        connect('button_press_event', self.on_click)
         show()
         
     def graphAfr(self):
         
         t = numpy.arange(0.0, len(self.AfrList), 1) 
         s = self.AfrList
+        figure(figsize=(9.5,5.5))
+        thismanager = get_current_fig_manager()
+        thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
         xlabel('time (s)')
         ylabel('AFR')
         title('Afr')
         grid(True)
+        connect('button_press_event', self.on_click)
         show()    
             
         
@@ -195,8 +209,9 @@ class MainWindow(QMainWindow):
         try:
             self.message = self.bus.recv()
         except:
-            print("")
-        print(self.message)
+            a =0
+        
+        
          
         QTimer.singleShot(10, self.increment) 
 
