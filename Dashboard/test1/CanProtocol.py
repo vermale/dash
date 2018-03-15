@@ -35,6 +35,7 @@ class CanTool:
             Map = 0
             Lambda1 = 0
             Lambda2 = 0
+            canid = ""
             
             
             def __init__ (self):
@@ -44,17 +45,23 @@ class CanTool:
                 self.CanTab.update({'Lambda1': CanData('305','Lambda1', 'Actual Measure Lambda Bank1', '', 'uchar', 0, 1, 25, 0, 0, 255, 2 )})
                 self.CanTab.update({'Lambda2': CanData('301','Lambda2', 'Actual Measure Lambda Bank2', '', 'uchar', 2, 1, 25, 0, 0, 255, 2 )})
                 
-            def decode(self, canid, data):
+            def decode(self, message):
+                
+                canid = message[0:3]
+                data = message[4:]
                 if ( canid == '300' ):
-                    Map = int(data[4])*256+int(data[5])
+                    val = int(data[9:10],16)*256+int(data[11:12],16)
+                    self.Map = val/1000
+                    print(self.Map)
                 if ( canid == '301' ):
-                    Lambda2 = (int(data[2])*2)/255
+                    self.Lambda2 = ((int(data[2:3],16)*2)/255)*14.7
                 if ( canid == '305' ):
-                    Lambda1=  (int(data[0])*2)/255
+                    self.Lambda1=  ((int(data[0:2],16)*2)/255)*14.7
                 if ( canid == '308'):
-                    Volt = ((int(data[0])*256+int(data[1]))*18)/1023
-                if ( canid == '30B '):
-                    Temp = (int(data[0])*140)/255+10
+                    self.Volt = ((int(data[0:2],16)*256+int(data[2:4],16))*18)/1023
+                if ( canid == '30B'):
+                    self.Temp = (int(data[0:2],16)*140)/255+10
+                    
                     
                     
                 
