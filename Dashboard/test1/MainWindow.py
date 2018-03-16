@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super(MainWindow, self).__init__()
-
+        
         # Set up the user interface from Designer.
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -68,6 +68,7 @@ class MainWindow(QMainWindow):
         layout = QGridLayout(self.ui.centralwidget)
         layout.setContentsMargins(1,1,1,1)
         layout.setColumnMinimumWidth(1,1)
+       
         
         self.move(0,0)
         
@@ -84,17 +85,20 @@ class MainWindow(QMainWindow):
         
         
         
-        temp = Dial("TEMP", "", 0, 120, 0.98, 0.20, 0,1)
+        temp = Dial("TEMP", "C°", 0, 120, 0.98, 0.20, 0,1)
         clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
         layout.addWidget(temp, 0, 0)
+        layout.setSpacing(0)
         
-        batt = Dial("BATT", "", 0, 15, 0.98, 0.20, 0,1)
+        layout.setContentsMargins(0,0,0,0)
+        
+        batt = Dial("BATT", "volt", 0, 15, 0.98, 0.20, 0,1)
         clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
         layout.addWidget(batt, 0, 1)
 
-        boost = Dial("MAP", "", 0, 2, 0.98, 0.20, 0,1)
+        boost = Dial("BOOST", "bar", 0, 2, 0.98, 0.20, 0,1)
         clickable(boost).connect(self.graphBoost)
         self.meters.append(boost)
         layout.addWidget(boost, 1, 0)
@@ -216,7 +220,6 @@ class MainWindow(QMainWindow):
         boost = self.meters[2]
         boost.setSpeed(self.tool.Map)
         self.BoostList.append(self.tool.Map)
-        
         
         
         try:

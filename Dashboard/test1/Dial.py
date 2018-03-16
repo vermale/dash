@@ -102,7 +102,7 @@ class Dial(QWidget):
 
         painter.setPen(self.unitTextColor)
         fontFamily = self.font().family()
-        unitFont = QFont(fontFamily, 18)
+        unitFont = QFont(fontFamily, 14)
         painter.setFont(unitFont)
         painter.drawText(unitRect, Qt.AlignCenter, "{}".format(self.unit))
 
@@ -110,12 +110,12 @@ class Dial(QWidget):
 
         painter.setPen(self.unitTextColor)
         fontFamily = self.font().family()
-        unitFont = QFont(fontFamily, 30)
+        unitFont = QFont(fontFamily, 25)
         painter.setFont(unitFont)
-        painter.drawText(unitRect, Qt.AlignCenter, "{}".format(self.title))
+        painter.drawText(unitRect, Qt.AlignLeft, "{}".format(self.title))
 
         speedColor = QColor(0,0,0)
-        speedFont = QFont(fontFamily, 35)
+        speedFont = QFont(fontFamily, 40)
         fm1 = QFontMetrics(speedFont)
         speedWidth = fm1.width(s_SpeedInt)
 
