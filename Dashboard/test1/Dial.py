@@ -1,14 +1,14 @@
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QConicalGradient, QColor, QPainterPath, QPainter, QFont, QFontMetrics
+from PyQt5.QtCore import Qt, QPoint, QRectF, QPointF
+from PyQt5.QtWidgets import QWidget
 
 class Dial(QWidget):
 
-    def __init__(self, title, unit, min, max, green, yellow, red, pc, parent=None):
+    def __init__(self, title, unit, tmin, tmax, green, yellow, red, pc, parent=None):
         QWidget.__init__(self, parent)
-        self.min = min
-        self.max = max
-        self.speed = min
+        self.min = tmin
+        self.max = tmax
+        self.speed = tmin
         self.pc = pc
         self.displayPowerPath = True
         self.title = title
@@ -49,11 +49,11 @@ class Dial(QWidget):
     def paintEvent(self, evt):
         x1 = QPoint(0, -70)
         x2 = QPoint(0, -90)
-        x3 = QPoint(-90,0)
+        #x3 = QPoint(-90,0)
         x4 = QPoint(-70,0)
         extRect = QRectF(-90,-90,180,180)
         intRect = QRectF(-70,-70,140,140)
-        midRect = QRectF(-44,-80,160,160)
+        #midRect = QRectF(-44,-80,160,160)
         unitRect = QRectF(-44,60,110,50)
 
         speedInt = self.speed

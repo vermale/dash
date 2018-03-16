@@ -5,16 +5,16 @@ from PyQt5.QtCore import QObject, pyqtSignal, QEvent, QTimer
 #from PyQt5 import *
 
 
-from pylab import *
+from pylab import close, figure, get_current_fig_manager, plot, xlabel, ylabel, title, grid, connect, show, ioff
 from ui_mainwindow import Ui_MainWindow
-#import sys, os, glob
+import sys, os, glob
 #import pickle
 #from TablePrototype import TableWindow, TableModel
 #from TablePrototype import ModelVE, ModelSA
 from Dial import Dial
 import serial
 #import random
-import can
+#import can
 #from warnings import catch_warnings
 import CanProtocol
 
@@ -41,14 +41,14 @@ def clickable(widget):
                         # The developer can opt for .emit(obj) to get the object within the slot.
                         return True
             return False
-    filter = Filter(widget)
-    widget.installEventFilter(filter)
-    return filter.clicked
+    tfilter = Filter(widget)
+    widget.installEventFilter(tfilter)
+    return tfilter.clicked
    
    
 class MainWindow(QMainWindow):
     
-    
+    nb= 0
     TempList = []
     AfrList = []
     BoostList = []
@@ -63,8 +63,6 @@ class MainWindow(QMainWindow):
         # Set up the user interface from Designer.
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.actionVolumetric_Efficiency.triggered.connect(self.openVE)
-        self.ui.actionSpark_Advance.triggered.connect(self.openSA)
         self.currentport = ""
         
         layout = QGridLayout(self.ui.centralwidget)
@@ -157,7 +155,7 @@ class MainWindow(QMainWindow):
         thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
          
-        xlabel('time (s)')
+        xlabel('events')
         ylabel('Volt')
         title('Voltage V')
         grid(True)
@@ -172,7 +170,7 @@ class MainWindow(QMainWindow):
         thismanager = get_current_fig_manager()
         thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
-        xlabel('time (s)')
+        xlabel('events')
         ylabel('Boost')
         title('Boost mbar')
         grid(True)
@@ -187,7 +185,7 @@ class MainWindow(QMainWindow):
         thismanager = get_current_fig_manager()
         thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
-        xlabel('time (s)')
+        xlabel('events')
         ylabel('AFR')
         title('Afr')
         grid(True)
@@ -226,17 +224,24 @@ class MainWindow(QMainWindow):
         except:
             a =0
              
-        QTimer.singleShot(100, self.increment)
+        QTimer.singleShot(20, self.increment)
         
         
     def fileRead(self):        
         
         try: 
             self.line = self.file.readline()
+            if ( self.line == "" ):
+                self.file.close() 
+                self.file = open('candata.txt','r')   
+                self.line = self.file.readline()
+    
+            
         except:
-            close(self.file) 
+            #self.file.close() 
             self.file = open('candata.txt','r')   
             self.line = self.file.readline()
+            
             
                 
 
