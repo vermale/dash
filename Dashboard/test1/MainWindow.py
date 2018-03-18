@@ -21,6 +21,7 @@ import CanProtocol
 #mport matplotlib.path as mpath
 
 import numpy
+import can
 
 from matplotlib import pyplot
 #mport matplotlib.pyplot as plt
@@ -55,6 +56,7 @@ class MainWindow(QMainWindow):
     BattList = []
     TempWin = pyplot
     tool = CanProtocol.CanTool()
+    oldMess = ""
     
     
     def __init__(self):
@@ -85,14 +87,15 @@ class MainWindow(QMainWindow):
         
         
         
-        temp = Dial("TEMP", "C°", 0, 120, 0.98, 0.20, 0,1)
+        temp = Dial("TEMP", "C", 0, 120, 0.98, 0.20, 0,1)
         clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
         layout.addWidget(temp, 0, 0)
         layout.setSpacing(0)
         
         layout.setContentsMargins(0,0,0,0)
-        
+        self.showFullScreen()
+
         batt = Dial("BATT", "volt", 0, 15, 0.98, 0.20, 0,1)
         clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
@@ -120,9 +123,11 @@ class MainWindow(QMainWindow):
         #try:
         #    self.bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
         #except: 
-        #    print("Erreur lors de la conversion de l'année.")
+        #    print("Erreur lors de la conversion de l'annee.")
 
-        QTimer.singleShot(10, self.increment)
+        QTimer.singleShot(1000, self.increment)
+        QTimer.singleShot(1000, self.can_read)
+        self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
        
     
     def on_click(self,event):
@@ -137,16 +142,18 @@ class MainWindow(QMainWindow):
         t = numpy.arange(0.0, len(self.TempList), 1) 
         s = self.TempList
         
-        figure(num="TEMPERATURE",figsize=(9.5,5.5))
+        figure(num="TEMPERATURE",figsize=(12,10))
         thismanager = get_current_fig_manager()
-        thismanager.window.wm_geometry("+0+0")                            
+        #thismanager.window.wm_geometry("+0+0")                            
         plot(t, s, color="red", linewidth=1, linestyle="-")
          
         xlabel('time (s)')
         ylabel('Temperature')
-        title('Water C°')
+        title('Water C')
         grid(True)
         connect('button_press_event', self.on_click)
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
         show()
         
                 
@@ -154,9 +161,9 @@ class MainWindow(QMainWindow):
         
         t = numpy.arange(0.0, len(self.BattList), 1) 
         s = self.BattList
-        figure(num="VOLTAGE",figsize=(9.5,5.5))
+        figure(num="VOLTAGE",figsize=(12,10))
         thismanager = get_current_fig_manager()
-        thismanager.window.wm_geometry("+0+0")  
+        #thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
          
         xlabel('events')
@@ -164,6 +171,8 @@ class MainWindow(QMainWindow):
         title('Voltage V')
         grid(True)
         connect('button_press_event', self.on_click)
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
         show()
         
     def graphBoost(self):
@@ -172,13 +181,15 @@ class MainWindow(QMainWindow):
         s = self.BoostList
         figure(num="BOOST",figsize=(9.5,5.5))
         thismanager = get_current_fig_manager()
-        thismanager.window.wm_geometry("+0+0")  
+        #thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
         xlabel('events')
         ylabel('Boost')
         title('Boost mbar')
         grid(True)
         connect('button_press_event', self.on_click)
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
         show()
         
     def graphAfr(self):
@@ -187,23 +198,24 @@ class MainWindow(QMainWindow):
         s = self.AfrList
         figure(num="AFR",figsize=(9.5,5.5))
         thismanager = get_current_fig_manager()
-        thismanager.window.wm_geometry("+0+0")  
+        #thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
         xlabel('events')
         ylabel('AFR')
         title('Afr')
         grid(True)
         connect('button_press_event', self.on_click)
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
         show()    
             
         
 
     def increment(self):
         
-        self.fileRead()
-        line = self.line
-        
-        self.tool.decode( self.line)
+        #self.line = self.can_read()
+
+        self.tool.decode( self.message )
         
         batt = self.meters[1]
         batt.setSpeed(self.tool.Volt)
@@ -221,13 +233,7 @@ class MainWindow(QMainWindow):
         boost.setSpeed(self.tool.Map)
         self.BoostList.append(self.tool.Map)
         
-        
-        try:
-            self.message = self.bus.recv()
-        except:
-            a =0
-             
-        QTimer.singleShot(20, self.increment)
+        QTimer.singleShot(500, self.increment)
         
         
     def fileRead(self):        
@@ -257,29 +263,19 @@ class MainWindow(QMainWindow):
     def closeEvent(self, evt):
         evt.accept()
  
-    def serial_ports(self):
-        if sys.platform.startswith('win'):
-            ports = ['COM' + str(i + 1) for i in range(256)]
-
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            # this is to exclude your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-
-        else:
-            raise EnvironmentError('Unsupported platform')
-
-        result = []
-        
-        for port in ports:
-            try:
-                serial.Serial.setPort(self, port)
-
-                serial.Serial.close(self)
-                result.append(port)
-                print("found %s" % port)
-            except (OSError, serial.SerialException):
-                pass
-        return result
+    def can_read(self):
+        while True:
+            newMess = self.bus.recv(0)
+            if newMess != self.oldMess:
+                self.oldMess = newMess
+                data = str(newMess)
+                id = data[41:44]
+                mess = data[69:].replace(' ', '' )
+                self.message = id+"#"+mess
+                #print(message)
+                self.bus.flush_tx_buffer()
+                QTimer.singleShot(20, self.can_read)
+                return
+            
+        self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+        QTimer.singleShot(1000, self.can_read)

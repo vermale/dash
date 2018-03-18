@@ -47,19 +47,21 @@ class CanTool:
                 
             def decode(self, message):
                 
-                canid = message[0:3]
-                data = message[4:]
-                if ( canid == '300' ):
-                    val = int(data[9:10],16)*256+int(data[11:12],16)
-                    self.Map = val/1000
-                if ( canid == '301' ):
-                    self.Lambda2 = ((int(data[2:3],16)*2)/255)*14.7
-                if ( canid == '305' ):
-                    self.Lambda1=  ((int(data[0:2],16)*2)/255)*14.7
-                if ( canid == '308'):
-                    self.Volt = ((int(data[0:2],16)*256+int(data[2:4],16))*18)/1023
-                if ( canid == '30B'):
-                    self.Temp = (int(data[0:2],16)*140)/255+10
+                if message:
+
+                    canid = message[0:3]
+                    data = message[4:]
+                    if ( canid == '300' ):
+                        val = int(data[9:10],16)*256+int(data[11:12],16)
+                        self.Map = val/1000
+                    if ( canid == '301' ):
+                        self.Lambda2 = ((int(data[2:3],16)*2)/255)*14.7
+                    if ( canid == '305' ):
+                        self.Lambda1=  ((int(data[0:2],16)*2)/255)*14.7
+                    if ( canid == '308'):
+                        self.Volt = ((int(data[0:2],16)*256+int(data[2:4],16))*18)/1023
+                    if ( canid == '30b'):
+                        self.Temp = (int(data[0:2],16)*140)/255+10
                     
                     
                     
