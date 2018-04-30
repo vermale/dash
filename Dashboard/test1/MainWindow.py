@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QGridLayout
+from PyQt5.QtWidgets import QMainWindow, QGridLayout,QPushButton
 from PyQt5.QtCore import QObject, pyqtSignal, QEvent, QTimer
 
 
@@ -11,6 +11,7 @@ import CanProtocol
 
 import numpy
 import can
+import time
 
 from matplotlib import pyplot
 
@@ -44,6 +45,8 @@ class MainWindow(QMainWindow):
     BattList = []
     AirList = []
     FuelList = []
+    TpsList = []
+    RpmList = []
     TempWin = pyplot
     tool = CanProtocol.CanTool()
     oldMess = ""
@@ -58,7 +61,7 @@ class MainWindow(QMainWindow):
         self.currentport = ""
         
         layout = QGridLayout(self.ui.centralwidget)
-        layout.setContentsMargins(1,1,1,1)
+        layout.setContentsMargins(0,0,0,0)
         layout.setColumnMinimumWidth(1,1)
        
         
@@ -70,48 +73,62 @@ class MainWindow(QMainWindow):
         self.batt_value = 0
         self.boost_value = 0
         self.afr_value = 0
+        self.tps_value = 0
+        self.rpm_value = 0
         self.message =""
         self.meters = []
         self.line = ''
         self.file = ''
         
-        
+        btn = QPushButton('QUIT', self)
+        btn.clicked.connect(exit)
         
         temp = Dial("TEMP", "C", 0, 120, 0.98, 0.20, 0,1)
+
         clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
-        layout.addWidget(temp, 0, 0)
+        layout.addWidget(temp, 3, 0, 2, 3)
         layout.setSpacing(0)
         
-        layout.setContentsMargins(0,0,0,0)
+        afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
+        clickable(afr).connect(self.graphAfr)
+        self.meters.append(afr)
+        layout.addWidget(afr, 0, 0, 2, 3)   
+
+        layout.setContentsMargins(50,20,0,0)
         
         #self.showFullScreen()
 
         batt = Dial("BATT", "volt", 0, 15, 0.98, 0.20, 0,1)
         clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
-        layout.addWidget(batt, 0, 1)
+        layout.addWidget(batt, 4, 3, 1, 1 )
+
+        air = Dial("AIR", "C", -10, 150, 0.98, 0.2, 0, 1 )
+        clickable(air).connect(self.graphAir)
+        self.meters.append(air)
+        layout.addWidget(air, 4, 4, 1, 1 )
+        
+        fuel = Dial("FUEL", "bar", 0, 150, 0.98, 0.2, 0, 1 )
+        clickable(fuel).connect(self.graphFuel)
+        self.meters.append(fuel)
+        layout.addWidget(fuel, 4, 5, 1, 1 )
+
+        rpm = Dial("RPM", "tr/min", 0, 7500, 0.98, 0.2, 0, 1 )
+        clickable(rpm).connect(self.graphRpm)
+        self.meters.append(rpm)
+        layout.addWidget(rpm, 0, 3, 4, 3 )
 
         boost = Dial("BOOST", "bar", 0, 3, 0.98, 0.20, 0,1)
         clickable(boost).connect(self.graphBoost)
         self.meters.append(boost)
-        layout.addWidget(boost, 1, 0)
-        
-        afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
-        clickable(afr).connect(self.graphAfr)
-        self.meters.append(afr)
-        layout.addWidget(afr, 1, 1)   
+        layout.addWidget(boost, 0, 6, 2, 3)
 
-        air = Dial("AIR", "", -10, 150, 0.98, 0.2, 0, 1 )
-        clickable(air).connect(self.graphAir)
-        self.meters.append(air)
-        layout.addWidget(air, 0, 2 )
-        
-        fuel = Dial("FUEL", "", 0, 150, 0.98, 0.2, 0, 1 )
-        clickable(fuel).connect(self.graphFuel)
-        self.meters.append(fuel)
-        layout.addWidget(fuel, 1, 2 )
-        
+        tps = Dial("TPS", "%", 0, 100, 0.98, 0.2, 0, 1 )
+        clickable(tps).connect(self.graphTps)
+        self.meters.append(tps)
+        layout.addWidget(tps, 3, 6, 2, 3 )
+
         self.BoostList.append(0)
         self.BoostList.append(2)
         self.AfrList.append(0)
@@ -124,13 +141,16 @@ class MainWindow(QMainWindow):
         self.FuelList.append(150)
         self.AirList.append(0)
         self.AirList.append(150)
-
-
-        QTimer.singleShot(1000, self.increment)
+        self.TpsList.append(0)
+        self.TpsList.append(100)
+        self.RpmList.append(0)
+        self.RpmList.append(7500)
 
         filter = [{'can_id':0x300, 'can_mask': 0x00f }]
-
         self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+
+        self.showFullScreen()
+        QTimer.singleShot(50, self.increment)
        
     
     def on_click(self,event):
@@ -182,7 +202,7 @@ class MainWindow(QMainWindow):
         
         t = numpy.arange(0.0, len(self.BoostList), 1) 
         s = self.BoostList
-        figure(num="BOOST",figsize=(9.5,5.5))
+        figure(num="BOOST",figsize=(20,20))
         thismanager = get_current_fig_manager()
         #thismanager.window.wm_geometry("+0+0")  
         plot(t, s)
@@ -233,8 +253,8 @@ class MainWindow(QMainWindow):
 
     def graphFuel(self):
         
-        t = numpy.arange(0.0, len(self.fuelList), 1) 
-        s = self.fuelList
+        t = numpy.arange(0.0, len(self.FuelList), 1) 
+        s = self.FuelList
         figure(num="FUEL",figsize=(9.5,5.5))
         thismanager = get_current_fig_manager()
         #thismanager.window.wm_geometry("+0+0")  
@@ -249,47 +269,103 @@ class MainWindow(QMainWindow):
         show()    
 
 
+    def graphRpm(self):
+        
+        t = numpy.arange(0.0, len(self.RpmList), 1) 
+        s = self.RpmList
+        figure(num="RPM",figsize=(12,12))
+        thismanager = get_current_fig_manager()
+        #thismanager.window.wm_geometry("+0+0")  
+        plot(t, s)
+        xlabel('events')
+        ylabel('RPM')
+        title('Rpm')
+        grid(True)
+        connect('button_press_event', self.on_click)
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
+        show()    
+
+    def graphTps(self):
+        
+        t = numpy.arange(0.0, len(self.TpsList), 1) 
+        s = self.TpsList
+        figure(num="TPS",figsize=(9.5,5.5))
+        thismanager = get_current_fig_manager()
+        #thismanager.window.wm_geometry("+0+0")  
+        plot(t, s)
+        xlabel('events')
+        ylabel('RPM')
+        title('rpm')
+        grid(True)
+        connect('button_press_event', self.on_click)
+        
+        mng = pyplot.get_current_fig_manager()
+        mng.window.showMaximized()
+        show()    
+
+    def fastRead(self):
+
+        self.line = self.can_read(0x300)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            boost = self.meters[6]
+            boost.setSpeed(self.tool.Map)
+            self.BoostList.append(self.tool.Map)
+            tps = self.meters[7]
+            tps.setSpeed(self.tool.Tps)
+            self.TpsList.append(self.tool.Tps)
+            rpm = self.meters[5]
+            rpm.setSpeed(self.tool.Rpm)
+            self.RpmList.append(self.tool.Rpm)
 
     def increment(self):
         
+        self.fastRead()
+        
         self.line = self.can_read(0x308)
-        self.tool.decode( self.message )
-        batt = self.meters[1]
-        batt.setSpeed(self.tool.Tps)
-        self.BattList.append(self.tool.Tps)
+        if ( self.message != "#" ):
+            print("message",self.message)
+            self.tool.decode( self.message )
+            batt = self.meters[2]
+            batt.setSpeed(self.tool.Volt)
+            self.BattList.append(self.tool.Volt)
+
+        self.fastRead()
         
         self.line = self.can_read(0x30b)
-        self.tool.decode( self.message)
-        temp = self.meters[0]
-        temp.setSpeed(self.tool.Temp)
-        self.TempList.append(self.tool.Temp)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message)
+            temp = self.meters[0]
+            temp.setSpeed(self.tool.Temp)
+            #print("temp", self.tool.Temp)
+            self.TempList.append(self.tool.Temp)
+            air = self.meters[3]
+            air.setSpeed(self.tool.Air)
+            self.AirList.append(self.tool.Air)
 
-        air = self.meters[4]
-        air.setSpeed(self.tool. Air)
-        self.AirList.append(self.tool.Air)
+        self.fastRead()
 
-        
-        
-        
         self.line = self.can_read(0x305)
-        self.tool.decode( self.message )
-        afr = self.meters[3]
-        afr.setSpeed(self.tool.Lambda1)
-        self.AfrList.append(self.tool.Lambda1)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            afr = self.meters[1]
+            afr.setSpeed(self.tool.Lambda1)
+            print("afr", self.tool.Lambda1)
+            self.AfrList.append(self.tool.Lambda1)
         
-        self.line = self.can_read(0x300)
-        self.tool.decode( self.message )
-        boost = self.meters[2]
-        boost.setSpeed(self.tool.Map)
-        self.BoostList.append(self.tool.Map)
-        
+        self.fastRead()
+
         self.line = self.can_read(0x306)
-        self.tool.decode( self.message )
-        oil = self.meters[5]
-        oil.setSpeed(self.tool.Oil)
-        self.OilList.append(self.tool.Oil)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            fuel = self.meters[4]
+            fuel.setSpeed(self.tool.Fuel)
+            self.FuelList.append(self.tool.Fuel)
         
-        QTimer.singleShot(300, self.increment)
+        self.fastRead()
+
+        QTimer.singleShot(50, self.increment)
         
         
     def fileRead(self):        
@@ -334,14 +410,16 @@ class MainWindow(QMainWindow):
             except:
                 print("err")
             #print(newMess)
+            self.message = ""
             data = str(newMess)
             idr = data[41:44]
             if idr != "":
                 #print(newMess, id)
                 if int(idr,16) == id:
                     break
-
+            else:
+                #print(time.time())
+                break
         mess = data[69:].replace(' ', '' )
         self.message = idr+"#"+mess
         #print(message)
-        #return message
