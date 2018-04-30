@@ -30,11 +30,15 @@ class CanData:
 class CanTool:
     
             CanTab = {}
-            Temp = 0
-            Volt = 0
-            Map = 0
-            Lambda1 = 0
-            Lambda2 = 0
+            Temp = 0.0
+            Volt = 0.0
+            Map = 0.0
+            Lambda1 = 0.0
+            Lambda2 = 0.0
+            Tair = 0.0
+            Fuelp = 0.0 
+            Rpm = 0
+            Tps = 0
             canid = ""
             
             
@@ -51,17 +55,29 @@ class CanTool:
 
                     canid = message[0:3]
                     data = message[4:]
+                    #print("mess:", message, "canid:",canid," message:",data)
                     if ( canid == '300' ):
-                        val = int(data[9:10],16)*256+int(data[11:12],16)
+                        val = float(int(data[9:11],16)*256+int(data[11:13],16))
                         self.Map = val/1000
+                        val = int(data[0:2],16)*256+int(data[2:4],16)
+                        self.Rpm = val
+                        val = int(data[5:6],16)*100/255
+                        self.Tps = val
                     if ( canid == '301' ):
-                        self.Lambda2 = ((int(data[2:3],16)*2)/255)*14.7
+                        self.Lambda2 = float(((int(data[4:6],16)*2)/255)*14.7)
                     if ( canid == '305' ):
-                        self.Lambda1=  ((int(data[0:2],16)*2)/255)*14.7
+                        self.Lambda1=  float(((int(data[0:2],16)*2)/255)*14.7)
+                    if ( canid == '306' ):
+                        self.Fuelp = float(int(data[12:14],16)*256+int(data[14:16],16))*0.1
                     if ( canid == '308'):
-                        self.Volt = ((int(data[0:2],16)*256+int(data[2:4],16))*18)/1023
+                        val = 0.0
+                        val = float(int(data[0:2],16)*256+int(data[2:4],16))
+                        self.Volt = val
+                        self.Volt = self.Volt*18/1000
                     if ( canid == '30b'):
-                        self.Temp = (int(data[0:2],16)*140)/255+10
+                        self.Temp = float((int(data[0:2],16)*140)/255+10)
+                        self.Tair = float((int(data[6:8],16)*140)/255+10)
+
                     
                     
                     
