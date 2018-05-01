@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QGridLayout,QPushButton
-from PyQt5.QtCore import QObject, pyqtSignal, QEvent, QTimer
-
+from PyQt5.QtWidgets import QMainWindow, QGridLayout,QPushButton, QWidget, QLabel, QApplication
+from PyQt5.QtCore import QObject, pyqtSignal, QEvent, QTimer, QSize
+from PyQt5.QtGui import QIcon, QPixmap
 
 from pylab import close, figure, get_current_fig_manager, plot, xlabel, ylabel, title, grid, connect, show, ioff
 from ui_mainwindow import Ui_MainWindow
@@ -80,54 +80,68 @@ class MainWindow(QMainWindow):
         self.line = ''
         self.file = ''
         
-        btn = QPushButton('QUIT', self)
-        btn.clicked.connect(exit)
+        Quit = QPushButton(QIcon('stop.jpg'), '', self )
+        size = QSize(100,100)
+        Quit.setIconSize(size)
+        layout.addWidget(Quit,0,0)
+        Quit.clicked.connect(exit)
+
+        Motor = QPushButton(QIcon('motor.jpg'), '', self)
+        Motor.setIconSize(size)
+        layout.addWidget(Motor, 2, 0)
+
+        Speed = QPushButton(QIcon('speed.jpg'), '', self)
+        Speed.setIconSize(size)
+        layout.addWidget(Speed, 4, 0)
+        #Halt = QPushButton('HALT', self)
+        #layout.addWidget(Halt, 1, 0  )
+        Quit.clicked.connect(exit)
         
         temp = Dial("TEMP", "C", 0, 120, 0.98, 0.20, 0,1)
 
         clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
-        layout.addWidget(temp, 3, 0, 2, 3)
+        layout.addWidget(temp, 3, 1, 3, 3)
         layout.setSpacing(0)
         
         afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
         clickable(afr).connect(self.graphAfr)
         self.meters.append(afr)
-        layout.addWidget(afr, 0, 0, 2, 3)   
+        layout.addWidget(afr, 0, 1, 3, 3)   
 
-        layout.setContentsMargins(50,20,0,0)
+        layout.setContentsMargins(0,0,0,0)
         
         #self.showFullScreen()
 
         batt = Dial("BATT", "volt", 0, 15, 0.98, 0.20, 0,1)
         clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
-        layout.addWidget(batt, 4, 3, 1, 1 )
+        layout.addWidget(batt, 5, 5, 1, 1 )
 
         air = Dial("AIR", "C", -10, 150, 0.98, 0.2, 0, 1 )
         clickable(air).connect(self.graphAir)
         self.meters.append(air)
-        layout.addWidget(air, 4, 4, 1, 1 )
+        layout.addWidget(air, 5, 6, 1, 1 )
         
         fuel = Dial("FUEL", "bar", 0, 150, 0.98, 0.2, 0, 1 )
         clickable(fuel).connect(self.graphFuel)
         self.meters.append(fuel)
-        layout.addWidget(fuel, 4, 5, 1, 1 )
+        layout.addWidget(fuel, 5, 7, 1, 1 )
 
         rpm = Dial("RPM", "tr/min", 0, 7500, 0.98, 0.2, 0, 1 )
         clickable(rpm).connect(self.graphRpm)
         self.meters.append(rpm)
-        layout.addWidget(rpm, 0, 3, 4, 3 )
+        layout.addWidget(rpm, 0, 5, 6, 3 )
 
         boost = Dial("BOOST", "bar", 0, 3, 0.98, 0.20, 0,1)
         clickable(boost).connect(self.graphBoost)
         self.meters.append(boost)
-        layout.addWidget(boost, 0, 6, 2, 3)
+        layout.addWidget(boost, 0, 8, 3, 3)
 
         tps = Dial("TPS", "%", 0, 100, 0.98, 0.2, 0, 1 )
         clickable(tps).connect(self.graphTps)
         self.meters.append(tps)
-        layout.addWidget(tps, 3, 6, 2, 3 )
+        layout.addWidget(tps, 3, 8, 3, 3 )
 
         self.BoostList.append(0)
         self.BoostList.append(2)
