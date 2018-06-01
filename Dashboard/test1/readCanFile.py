@@ -13,30 +13,16 @@
 #
 #
 # TODO check for queue full
-
-import can
 import time
 import os
 import queue
 from threading import Thread
 
 
-outfile = open('log.txt','w')
 count = 0
-
-print('\n\rCAN Rx test')
-print('Bring up CAN0....')
-
-# Bring up can0 interface at 500kbps
-os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
 time.sleep(0.1)	
 print('Press CTL-C to exit')
 
-try:
-	bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
-except OSError:
-	print('Cannot find PiCAN board.')
-	exit()
 
 def read_file_task():
 	file = open("recvCan.txt", "r") 
@@ -44,27 +30,19 @@ def read_file_task():
 		q.put(file.read)
 
 	
-	
-# CAN receive thread
-def can_rx_task():
-	while True:
-		message = bus.recv()
-		q.put(message)			# Put message into queue
-
 q = queue.Queue()	
 t = Thread(target = read_file_task)	# Start receive thread
 t.start()
 
 # Main loop
 try:
-	file = open("recvCan.txt","w") 
  
 	while True:
 		if q.empty() != True:	# Check if there is a message in queue
 			message = q.get()
 			print(message)
 			count += 1
-			file.write(message) 	
+
 
 	
 except KeyboardInterrupt:
