@@ -25,9 +25,9 @@ print('Press CTL-C to exit')
 
 
 def read_file_task():
-	file = open("recvCan.txt", "r") 
-	while True:
-		q.put(file.read)
+	with open("recvCan.txt")  as f: 
+		for line in f: 
+			q.put(line)
 
 	
 q = queue.Queue()	
