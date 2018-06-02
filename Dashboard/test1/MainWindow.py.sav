@@ -8,7 +8,7 @@ from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 from Dial import Dial
 import serial
-#import CanProtocol
+import CanProtocol
 
 import numpy
 import can
@@ -28,6 +28,7 @@ Air = 0.0
 Fuel = 0.0 
 Rpm = 0
 Tps = 0
+
 
 def decodeData(message):
 
@@ -72,7 +73,6 @@ def decodeData(message):
 
 			
 def can_rx_task():
-	bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
 	while True:
 		message = bus.recv()
 		decodeData(message)
@@ -251,7 +251,7 @@ class MainWindow(QMainWindow):
     RpmList = []
     KmList = []
     TempWin = pyplot
-    #tool = CanProtocol.CanTool()
+    tool = CanProtocol.CanTool()
     oldMess = ""
     myTrack = Track() 
     start = GpsPoint(0,0)
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         
 
         #filter = [{'can_id':0x300, 'can_mask': 0x00f }]
-        #bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+        self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
 
         #self.showFullScreen()
         print("start")
@@ -456,6 +456,128 @@ class MainWindow(QMainWindow):
         self.defList(self.TpsList, "TPS" )        
         self.graphWin('events', 'TPS', 'Thottle body%')
 
+    def fastRead(self):
+
+        line = self.can_read(0x300)
+        if ( line != "#" ):
+
+            self.tool.decode( line )
+            boost = self.meters[6]
+            boost.setSpeed(self.tool.Map)
+            self.BoostList.append(self.tool.Map)
+            tps = self.meters[7]
+            tps.setSpeed(self.tool.Tps)
+            self.TpsList.append(self.tool.Tps)
+            rpm = self.meters[5]
+            rpm.setSpeed(self.tool.Rpm)
+            self.RpmList.append(self.tool.Rpm)
+			
+    
+    def mediumRead(self):
+		
+        line = self.can_read(0x305)
+        if ( line != "#" ):
+            self.tool.decode( line )
+            afr = self.meters[1]
+            afr.setSpeed(self.tool.Lambda1)
+            print("afr", self.tool.Lambda1)
+            self.AfrList.append(self.tool.Lambda1)
+        
+        line = self.can_read(0x306)
+        if ( line != "#" ):
+            self.tool.decode( line )
+            fuel = self.meters[4]
+            fuel.setSpeed(self.tool.Fuel)
+            self.FuelList.append(self.tool.Fuel)
+	
+		
+	
+    def slowRead(self):
+		
+        line = self.can_read(0x308)
+        if ( line != "#" ):
+            print("message",line)
+            self.tool.decode( line )
+            batt = self.meters[2]
+            batt.setSpeed(self.tool.Volt)
+            self.BattList.append(self.tool.Volt)
+        
+
+    def vslowRead(self):
+	
+		line = self.can_read(0x30b)
+		if ( line != "#" ):
+			self.tool.decode( line)
+			temp = self.meters[0]
+			temp.setSpeed(self.tool.Temp)
+			#print("temp", self.tool.Temp)
+			self.TempList.append(self.tool.Temp)
+			air = self.meters[3]
+			air.setSpeed(self.tool.Air)
+			self.AirList.append(self.tool.Air)
+
+    def step1(self):
+	
+		self.fastRead()
+		self.fastRead()
+		self.mediumRead()
+		self.fastRead()
+		self.fastRead()
+		self.mediumRead()
+		self.fastRead()
+		self.fastRead()
+
+    def step2(self):
+	
+		self.step1()
+		self.slowRead()
+		self.step1()
+		self.slowRead()
+		self.step1()
+
+			
+    def increment(self):
+        
+		self.fastRead()
+		#self.mediumRead()
+		#self.fastRead()
+		#self.slowRead()
+		#self.fastRead()
+		#self.vslowRead()
+			
+		#self.fastRead()
+		
+		#self.bus.flush_tx_buffer()
+		#QTimer.singleShot(50, self.increment)
+        
+		
+        
+    def fileRead(self):        
+        
+        try: 
+            self.line = self.file.readline()
+            if ( self.line == "" ):
+                self.file.close() 
+                self.file = open('candata.txt','r')   
+                self.line = self.file.readline()
+    
+            
+        except:
+            #self.file.close() 
+            self.file = open('candata.txt','r')   
+            self.line = self.file.readline()
+            
+
+    def fileWrite(self, data, name):
+
+        try:
+            f = open(name, 'w+')
+            for line in data:
+                f.writelines(str(line)+'\n')
+            f.close()    
+                
+        except:
+            print("Error writing file")    
 
 
     def saveAll(self):
@@ -481,48 +603,3 @@ class MainWindow(QMainWindow):
     def closeEvent(self, evt):
         evt.accept()
  
-    def increment(self):
-	
-        global Temp 
-        global Volt 
-        global Map 
-        global Lambda1 
-        global Lambda2 
-        global Air 
-        global Fuel 
-        global Rpm 
-        global Tps 
-
-        
-        batt = self.meters[2]
-        batt.setSpeed(Volt)
-        self.BattList.append(Volt)
-
-        temp = self.meters[0]
-        temp.setSpeed(Temp)
-        self.TempList.append(Temp)
-        air = self.meters[3]
-        air.setSpeed(Air)
-        self.AirList.append(Air)
-
-        afr = self.meters[1]
-        afr.setSpeed(Lambda1)
-        self.AfrList.append(Lambda1)
-        
-        fuel = self.meters[4]
-        fuel.setSpeed(Fuel)
-        self.FuelList.append(Fuel)
-        
-        boost = self.meters[6]
-        boost.setSpeed(Map)
-        self.BoostList.append(Map)
-        tps = self.meters[7]
-        tps.setSpeed(Tps)
-        self.TpsList.append(Tps)
-        rpm = self.meters[5]
-        rpm.setSpeed(Rpm)
-        self.RpmList.append(Rpm)
-        
-        
-        
-        QTimer.singleShot(50, self.increment)

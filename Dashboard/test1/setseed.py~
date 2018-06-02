@@ -1,0 +1,23 @@
+import time
+import serial
+
+import os
+import sys
+from string import Template
+
+# configure the serial connections (the parameters differs on the device you are connecting to)
+ser = serial.Serial(
+    port='/dev/ttyACM0',
+    baudrate=9600,
+    parity=serial.PARITY_ODD,
+    stopbits=serial.STOPBITS_TWO,
+    bytesize=serial.SEVENBITS
+)
+
+ser.isOpen()
+
+def ubx_change_rate():
+      msg = [0xb5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12]
+      ser.write(msg)
+      
+ubx_change_rate()     

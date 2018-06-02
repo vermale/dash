@@ -8,78 +8,14 @@ from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 from Dial import Dial
 import serial
-#import CanProtocol
+import CanProtocol
 
 import numpy
 import can
-
 import time
 
 from matplotlib import pyplot
 from string import Template
-from threading import Thread
-
-Temp = 0.0
-Volt = 0.0
-Map = 0.0
-Lambda1 = 0.0
-Lambda2 = 0.0
-Air = 0.0
-Fuel = 0.0 
-Rpm = 0
-Tps = 0
-
-def decodeData(message):
-
-	global Temp 
-	global Volt 
-	global Map 
-	global Lambda1 
-	global Lambda2 
-	global Air 
-	global Fuel 
-	global Rpm 
-	global Tps 
-	
-	message = str(message)
-	canid = message[41:44]
-	mess = message[69:].replace(' ', '' )
-	message = canid+"#"+mess
-	
-	data = message[4:]
-	#print("mess:", message, "canid:",canid," message:",data)
-	if ( canid == '300' ):
-		val = float(int(data[8:10],16)*256+int(data[10:12],16))
-		Map = val/1000
-		val = int(data[0:2],16)*256+int(data[2:4],16)
-		Rpm = val
-		val = int(data[4:6],16)*100/255
-		Tps = val
-	if ( canid == '301' ):
-		Lambda2 = float(int(data[4:6],16))*2*14.7/255
-	if ( canid == '305' ):
-		Lambda1=  float(int(data[0:2],16))*2*14.7/255
-	if ( canid == '306' ):
-		Fuel = float(int(data[12:14],16)*256+int(data[14:16],16))*0.1
-	if ( canid == '308'):
-		val = 0.0
-		val = float(int(data[0:2],16)*256+int(data[2:4],16))
-		Volt = val
-		Volt = Volt*18/1000
-	if ( canid == '30b'):
-		Temp = float((int(data[0:2],16)*160))/255-10
-		Air = float((int(data[6:8],16)*160))/255-10
-
-			
-def can_rx_task():
-	bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
-	while True:
-		message = bus.recv()
-		decodeData(message)
-
-t = Thread(target = can_rx_task)	# Start receive thread
-t.start()
-			
 
 # configure the serial connections (the parameters differs on the device you are connecting to)
 ser = serial.Serial(
@@ -251,7 +187,7 @@ class MainWindow(QMainWindow):
     RpmList = []
     KmList = []
     TempWin = pyplot
-    #tool = CanProtocol.CanTool()
+    tool = CanProtocol.CanTool()
     oldMess = ""
     myTrack = Track() 
     start = GpsPoint(0,0)
@@ -366,12 +302,11 @@ class MainWindow(QMainWindow):
         self.KmList.append(200)
         
 
-        #filter = [{'can_id':0x300, 'can_mask': 0x00f }]
-        #bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+        filter = [{'can_id':0x300, 'can_mask': 0x00f }]
+        self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
 
-        #self.showFullScreen()
-        print("start")
-        QTimer.singleShot(50,self.increment)
+        self.showFullScreen()
+        QTimer.singleShot(50, self.increment)
        
     def addPushB(self,pos,icon, layout):
 
@@ -456,6 +391,98 @@ class MainWindow(QMainWindow):
         self.defList(self.TpsList, "TPS" )        
         self.graphWin('events', 'TPS', 'Thottle body%')
 
+    def fastRead(self):
+
+        self.line = self.can_read(0x300)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            boost = self.meters[6]
+            boost.setSpeed(self.tool.Map)
+            self.BoostList.append(self.tool.Map)
+            tps = self.meters[7]
+            tps.setSpeed(self.tool.Tps)
+            self.TpsList.append(self.tool.Tps)
+            rpm = self.meters[5]
+            rpm.setSpeed(self.tool.Rpm)
+            self.RpmList.append(self.tool.Rpm)
+
+    def increment(self):
+        
+        self.fastRead()
+        
+        self.line = self.can_read(0x308)
+        if ( self.message != "#" ):
+            print("message",self.message)
+            self.tool.decode( self.message )
+            batt = self.meters[2]
+            batt.setSpeed(self.tool.Volt)
+            self.BattList.append(self.tool.Volt)
+
+        self.fastRead()
+        
+        self.line = self.can_read(0x30b)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message)
+            temp = self.meters[0]
+            temp.setSpeed(self.tool.Temp)
+            #print("temp", self.tool.Temp)
+            self.TempList.append(self.tool.Temp)
+            air = self.meters[3]
+            air.setSpeed(self.tool.Air)
+            self.AirList.append(self.tool.Air)
+
+        self.fastRead()
+
+        self.line = self.can_read(0x305)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            afr = self.meters[1]
+            afr.setSpeed(self.tool.Lambda1)
+            print("afr", self.tool.Lambda1)
+            self.AfrList.append(self.tool.Lambda1)
+        
+        self.fastRead()
+
+        self.line = self.can_read(0x306)
+        if ( self.message != "#" ):
+            self.tool.decode( self.message )
+            fuel = self.meters[4]
+            fuel.setSpeed(self.tool.Fuel)
+            self.FuelList.append(self.tool.Fuel)
+        
+        self.fastRead()
+        
+        
+        
+        QTimer.singleShot(50, self.increment)
+        
+        
+    def fileRead(self):        
+        
+        try: 
+            self.line = self.file.readline()
+            if ( self.line == "" ):
+                self.file.close() 
+                self.file = open('candata.txt','r')   
+                self.line = self.file.readline()
+    
+            
+        except:
+            #self.file.close() 
+            self.file = open('candata.txt','r')   
+            self.line = self.file.readline()
+            
+
+    def fileWrite(self, data, name):
+
+        try:
+            f = open(name, 'w+')
+            for line in data:
+                f.writelines(str(line)+'\n')
+            f.close()    
+                
+        except:
+            print("Error writing file")    
 
 
     def saveAll(self):
@@ -481,48 +508,32 @@ class MainWindow(QMainWindow):
     def closeEvent(self, evt):
         evt.accept()
  
-    def increment(self):
-	
-        global Temp 
-        global Volt 
-        global Map 
-        global Lambda1 
-        global Lambda2 
-        global Air 
-        global Fuel 
-        global Rpm 
-        global Tps 
+    def can_read(self, id):
 
-        
-        batt = self.meters[2]
-        batt.setSpeed(Volt)
-        self.BattList.append(Volt)
+        filter = [{'can_id':id, 'can_mask': 0x3FF }]
 
-        temp = self.meters[0]
-        temp.setSpeed(Temp)
-        self.TempList.append(Temp)
-        air = self.meters[3]
-        air.setSpeed(Air)
-        self.AirList.append(Air)
+            
+        # Multiple filters, will be handled in Python
+        #self.bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000, can_filters=filter)
+        #self.bus.set_filters(filter)
+        self.bus.flush_tx_buffer()
+        while True:
+            try:
+                newMess = self.bus.recv(0)
 
-        afr = self.meters[1]
-        afr.setSpeed(Lambda1)
-        self.AfrList.append(Lambda1)
-        
-        fuel = self.meters[4]
-        fuel.setSpeed(Fuel)
-        self.FuelList.append(Fuel)
-        
-        boost = self.meters[6]
-        boost.setSpeed(Map)
-        self.BoostList.append(Map)
-        tps = self.meters[7]
-        tps.setSpeed(Tps)
-        self.TpsList.append(Tps)
-        rpm = self.meters[5]
-        rpm.setSpeed(Rpm)
-        self.RpmList.append(Rpm)
-        
-        
-        
-        QTimer.singleShot(50, self.increment)
+            except:
+                print("err")
+            #print(newMess)
+            self.message = ""
+            data = str(newMess)
+            idr = data[41:44]
+            if idr != "":
+                #print(newMess, id)
+                if int(idr,16) == id:
+                     break
+            else:
+                #print(time.time())
+                break
+        mess = data[69:].replace(' ', '' )
+        self.message = idr+"#"+mess
+        #print(message)
