@@ -6,4 +6,5 @@
  export QT_DEBUG_PLUGINS=1
  python test.py
 
- sudo apt-get install -y libxcb-cursor-dev or
+ sudo apt-get install -y libxcb-cursor-dev 
+ sudo apt install qtbase5-dev
