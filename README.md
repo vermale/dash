@@ -8,3 +8,8 @@
 
  sudo apt-get install -y libxcb-cursor-dev 
  sudo apt install qtbase5-dev
+
+  sudo apt-get install python-tk
+ 
+  pip install pylab-sdk
+ 
