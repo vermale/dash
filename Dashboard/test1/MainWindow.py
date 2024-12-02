@@ -339,13 +339,6 @@ class MainWindow(QMainWindow):
         self.write_to_csv('my_data.csv', [self.RpmList, self.TpsList, self.TempList, self.BoostList, self.AfrList, self.VoltList, self.AirList, self.FuelList], headers)
         print("save")
         #self.fileWrite(self.TempList, "temp.txt") 
-        #self.fileWrite(self.BoostList, "boost.txt") 
-        #self.fileWrite(self.AirList, "air.txt") 
-        #self.fileWrite(self.AfrList, "afr.txt") 
-        #self.fileWrite(self.RpmList, "rpm.txt") 
-        #self.fileWrite(self.TpsList, "tps.txt") 
-        #self.fileWrite(self.FuelList, "fuel.txt") 
-        #self.fileWrite(self.BattList, "batt.txt") 
         return
 
     def openVE(self):
