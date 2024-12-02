@@ -1,21 +1,14 @@
- pip install PyQt5
- apt-get install qt
-
- sudo apt-get install qt
- sudo apt-get install build-essential libgl1-mesa-dev
- export QT_DEBUG_PLUGINS=1
- python test.py
-
- sudo apt-get install -y libxcb-cursor-dev 
- sudo apt install qtbase5-dev
-
-  sudo apt-get install python-tk
+ pip install matplotlib
+ pip install pylab
+ pip install numpy
+ sudo apt install libopenblas-dev
+ pip install can
+ python main.py
  
-  pip install pylab-sdk
+vi /boot/config.txt
 
-  sudo apt install python3-numpy
- 
-  sudo apt install python3-scipy
-  sudo apt install python3-matplotlib
-  sudo apt install python3-can
- 
+add at the end : 
+
+dtparam=spi=on
+dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25
+#dtoverlay=spi-bcm2835-overlay 
