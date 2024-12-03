@@ -7,6 +7,7 @@ from matplotlib.pyplot import close, figure, get_current_fig_manager, plot, xlab
 from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 from Dial import Dial
+import datetime
 
 import numpy
 import can
@@ -33,7 +34,7 @@ os.system("sudo /sbin/ip link set down can0")
 os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
 time.sleep(0.1)
 
-headers = ['Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
+headers = ['hh', 'Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
 csvfile =  open('my_data.csv', 'a', newline='') 
 csv_writer = csv.writer(csvfile)
 csv_writer.writerow(headers)
@@ -83,31 +84,38 @@ def decodeData(message):
 
 	
 def task():
-	dataList.append(format(Rpm,'.2f'))
-	dataList.append(format(Tps,'.2f'))
-	dataList.append(format(Temp,'.2f'))
-	dataList.append(format(Map,'.2f'))
-	dataList.append(format(Lambda1,'.2f'))
-	dataList.append(format(Volt,'.2f'))
-	dataList.append(format(Air,'.2f'))
-	dataList.append(format(Fuel,'.2f'))
-	csv_writer.writerow(dataList)
-	csvfile.flush()
-	dataList.clear()
+	if Rpm >0:
+		now = datetime.datetime.now()
+		formatted_time = now.strftime("%H:%M:%S:%f")[:-4]  # Remove the last 3 digits of microseconds
+		dataList.append(formatted_time)
+		dataList.append(format(Rpm,'.2f'))
+		dataList.append(format(Tps,'.2f'))
+		dataList.append(format(Temp,'.2f'))
+		dataList.append(format(Map,'.2f'))
+		dataList.append(format(Lambda1,'.2f'))
+		dataList.append(format(Volt,'.2f'))
+		dataList.append(format(Air,'.2f'))
+		dataList.append(format(Fuel,'.2f'))
+		csv_writer.writerow(dataList)
+		csvfile.flush()
+		dataList.clear()
 	
 
-while True:
-    task()
-    time.sleep(1)
 
 			
 def can_rx_task():
+
+    nb = 0	
     bus = can.interface.Bus(channel='can0', bustype='socketcan', bitrate=500000)
     print("init")     
     while True:
+        #if nb==10: 
+        #     nb=0
+        task()
+        #nb = nb+1
         message = bus.recv(24)
         decodeData(message)
-        time.sleep(0.001)
+        time.sleep(0.05)
 
 t = Thread(target = can_rx_task)	# Start receive thread
 t.start()

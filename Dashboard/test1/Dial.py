@@ -103,6 +103,7 @@ class Dial(QWidget):
         painter.setPen(self.unitTextColor)
         fontFamily = self.font().family()
         unitFont = QFont(fontFamily, 14)
+        unitFont.setFixedPitch(True)
         painter.setFont(unitFont)
         painter.drawText(unitRect, Qt.AlignCenter, "{}".format(self.unit))
 
