@@ -8,6 +8,7 @@ from ui_mainwindow import Ui_MainWindow
 import sys, os, glob
 from Dial import Dial
 import datetime
+import numpy as np
 
 import numpy
 import can
@@ -25,7 +26,7 @@ Map = 0.0
 Lambda1 = 0.0
 Lambda2 = 0.0
 Air = 0.0
-Fuel = 0.0 
+Fuel = 0.0
 Rpm = 0
 Tps = 0
 dataList = []
@@ -35,28 +36,28 @@ os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
 time.sleep(0.1)
 
 headers = ['hh', 'Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
-csvfile =  open('my_data.csv', 'a', newline='') 
+csvfile =  open('my_data.csv', 'a', newline='')
 csv_writer = csv.writer(csvfile)
 csv_writer.writerow(headers)
 
 
 def decodeData(message):
 
-	global Temp 
-	global Volt 
-	global Map 
-	global Lambda1 
-	global Lambda2 
-	global Air 
-	global Fuel 
-	global Rpm 
-	global Tps 
+	global Temp
+	global Volt
+	global Map
+	global Lambda1
+	global Lambda2
+	global Air
+	global Fuel
+	global Rpm
+	global Tps
 
 	message = str(message)
 	canid = message[41:44]
 	mess = message[78:]
 	message = canid+"#"+mess
-    
+
 	data = message[4:]
 	print("mess:", message, "canid:",canid," message:",data)
 	if ( canid == '300' ):
@@ -82,7 +83,6 @@ def decodeData(message):
 		Temp = float((int(data[0:2],16)))*150/255-10
 		Air = float((int(data[9:11],16)))*150/255-10
 
-	
 def task():
 	if Rpm >0:
 		now = datetime.datetime.now()
@@ -99,17 +99,14 @@ def task():
 		csv_writer.writerow(dataList)
 		csvfile.flush()
 		dataList.clear()
-	
 
-
-			
 def can_rx_task():
 
-    nb = 0	
+    nb = 0
     bus = can.interface.Bus(channel='can0', bustype='socketcan', bitrate=500000)
-    print("init")     
+    print("init")
     while True:
-        #if nb==10: 
+        #if nb==10:
         #     nb=0
         task()
         #nb = nb+1
@@ -119,15 +116,15 @@ def can_rx_task():
 
 t = Thread(target = can_rx_task)	# Start receive thread
 t.start()
-			
+
 def clickable(widget):
-      
+
     class Filter(QObject):
-        
+
         clicked = pyqtSignal()
-           
+
         def eventFilter(self, obj, event):
-           
+
             if obj == widget:
                 if event.type() == QEvent.MouseButtonRelease:
                     if obj.rect().contains(event.pos()):
@@ -138,11 +135,9 @@ def clickable(widget):
     tfilter = Filter(widget)
     widget.installEventFilter(tfilter)
     return tfilter.clicked
-    
-    
-	  
+
 class MainWindow(QMainWindow):
-    
+
     nb= 0
     TempList = []
     AfrList = []
@@ -156,14 +151,13 @@ class MainWindow(QMainWindow):
     TempWin = pyplot
     #tool = CanProtocol.CanTool()
     oldMess = ""
-    
-    
+
     def myShutDown(self):
         os.system("sudo /sbin/halt")
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        
+
         # Set up the user interface from Designer.
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -172,10 +166,10 @@ class MainWindow(QMainWindow):
         layout = QGridLayout(self.ui.centralwidget)
         layout.setContentsMargins(0,0,0,0)
         layout.setColumnMinimumWidth(1,1)
-             
-        self.move(0,0) 
+
+        self.move(0,0)
         self.ui.centralwidget.setLayout(layout)
-                          
+
         self.temp_value = 0
         self.batt_value = 0
         self.boost_value = 0
@@ -186,31 +180,31 @@ class MainWindow(QMainWindow):
         self.meters = []
         self.line = ''
         self.file = ''
-        
+
         Quit = self.addPushB( 0, 'linux.jpg', layout)
         Quit.clicked.connect(self.close)
         motor = self.addPushB( 2, 'motor.jpg', layout)
-        speed = self.addPushB( 3, 'speed.jpg', layout)   
+        speed = self.addPushB( 3, 'speed.jpg', layout)
         #speed.clicked.connect( layout.setEnabled(false))
         FileSave = self.addPushB( 4, 'save.jpg', layout)
         FileSave.clicked.connect(self.saveAll)
         shutdown = self.addPushB( 5, 'shutdown.jpg', layout)
         shutdown.clicked.connect(self.myShutDown)
-       
+
         temp = Dial("TEMP", "C", 0, 120, 0.98, 0.20, 0,1)
 
         clickable(temp).connect(self.graphTemp)
         self.meters.append(temp)
         layout.addWidget(temp, 3, 1, 3, 3)
         layout.setSpacing(0)
-        
+
         afr = Dial("AFR", "", 0, 20, 0.98, 0.20, 0,1)
         clickable(afr).connect(self.graphAfr)
         self.meters.append(afr)
-        layout.addWidget(afr, 0, 1, 3, 3)   
+        layout.addWidget(afr, 0, 1, 3, 3)
 
         layout.setContentsMargins(0,0,0,0)
-                        
+
         batt = Dial("BATT", "volt", 0, 15, 0.98, 0.20, 0,1)
         clickable(batt).connect(self.graphBatt)
         self.meters.append(batt)
@@ -220,7 +214,7 @@ class MainWindow(QMainWindow):
         clickable(air).connect(self.graphAir)
         self.meters.append(air)
         layout.addWidget(air, 5, 6, 1, 1 )
-        
+
         fuel = Dial("FUEL", "bar", 0, 150, 0.98, 0.2, 0, 1 )
         clickable(fuel).connect(self.graphFuel)
         self.meters.append(fuel)
@@ -240,7 +234,7 @@ class MainWindow(QMainWindow):
         clickable(tps).connect(self.graphTps)
         self.meters.append(tps)
         layout.addWidget(tps, 3, 8, 3, 3 )
-        
+
         self.BoostList.append(0)
         self.BoostList.append(2)
         self.AfrList.append(0)
@@ -265,7 +259,7 @@ class MainWindow(QMainWindow):
 
         #self.showFullScreen()
         QTimer.singleShot(50,self.increment)
-       
+
     def addPushB(self,pos,icon, layout):
 
         size = QSize(100,100)
@@ -273,15 +267,15 @@ class MainWindow(QMainWindow):
         pb.setIconSize(size)
         layout.addWidget(pb, pos, 0)
         return pb
-    
+
     def on_click(self,event):
         # get the x and y coords, flip y from top to bottom
         if event.button == 1:
             ioff()
             close()
-           
+
     def graphWin(self, xLabel, yLabel, Title):
-         
+
         xlabel(xLabel)
         ylabel(yLabel)
         title(Title)
@@ -293,61 +287,70 @@ class MainWindow(QMainWindow):
 
     def defList(self, sList,sTitle ):
 
-        t = numpy.arange(0.0, len(sList), 1) 
+        t = numpy.arange(0.0, len(sList), 1)
         s = sList
         figure(num=sTitle,figsize=(12,10))
         thismanager = get_current_fig_manager()
         plot(t, s, color="red", linewidth=1, linestyle="-")
 
+    def defLists(self, sList_list,sTitle ):
+
+        figure(num=sTitle,figsize=(12,10))
+        thismanager = get_current_fig_manager()
+        for sList in sList_list:
+                t = np.arange(0.0, len(sList), 1)
+                plot(t, sList, linewidth=1, linestyle="-")
+
     def graphTemp(self):
-        
+
         self.defList(self.TempList, "TEMPERATURE" )
         self.graphWin('time(s)', 'Temperature', 'Water C')
-        
+
     def graphKm(self):
-        
+
         self.defList(self.KmList, "Speed" )
         self.graphWin('time(1/50s)', 'km/h', 'km/h')
-                
-                
+
     def graphBatt(self):
-        
+
         self.defList(self.BattList, "VOLTAGE" )
         self.graphWin('events', 'Volts', 'Voltage V')
-        
+
     def graphBoost(self):
-        
+
         self.defList(self.BoostList, "BOOST" )
         self.graphWin('events', 'Boost', 'Boost mbar')
 
 
     def graphAfr(self):
 
-        self.defList(self.AfrList, "AFR" )        
+        self.defList(self.AfrList, "AFR" )
         self.graphWin('events', 'AFR', 'Afr')
 
-        
+
     def graphAir(self):
 
-        self.defList(self.AirList, "AIR" )        
+        self.defList(self.AirList, "AIR" )
         self.graphWin('events', 'AIR', 'Air')
 
 
     def graphFuel(self):
 
-        self.defList(self.FuelList, "FUEL" )        
+        self.defList(self.FuelList, "FUEL" )
         self.graphWin('events', 'FUEL', 'Fuel')
 
 
     def graphRpm(self):
 
-        self.defList(self.RpmList, "RPM" )        
+        self.defList(self.RpmList, "RPM" )
         self.graphWin('events', 'RPM', 'Rpm')
 
     def graphTps(self):
 
-        self.defList(self.TpsList, "TPS" )        
-        self.graphWin('events', 'TPS', 'Thottle body%')
+        data_list = [self.TpsList, self.RpmList]
+        #self.defList(self.TpsList, "TPS" )
+        self.defLists(data_list,"TPS RPM" )
+        self.graphWin('events', 'TPS RPM', 'Thottle body% / Rpm')
 
 
     def write_to_csv(self, filename, headers):
@@ -362,10 +365,10 @@ class MainWindow(QMainWindow):
             f = open(name, 'w+')
             for line in data:
                 f.writelines(str(line)+'\n')
-            f.close()    
-                
+            f.close()
+
         except:
-            print("Error writing file")    
+            print("Error writing file")
 
 
     def saveAll(self):
@@ -384,19 +387,19 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, evt):
         evt.accept()
- 
+
     def increment(self):
-	
-        global Temp 
-        global Volt 
-        global Map 
-        global Lambda1 
-        global Lambda2 
-        global Air 
-        global Fuel 
-        global Rpm 
-        global Tps 
-        
+
+        global Temp
+        global Volt
+        global Map
+        global Lambda1
+        global Lambda2
+        global Air
+        global Fuel
+        global Rpm
+        global Tps
+
         batt = self.meters[2]
         batt.setSpeed(Volt)
         self.BattList.append(Volt)
@@ -411,11 +414,11 @@ class MainWindow(QMainWindow):
         afr = self.meters[1]
         afr.setSpeed(Lambda1)
         self.AfrList.append(Lambda1)
-        
+
         fuel = self.meters[4]
         fuel.setSpeed(Fuel)
         self.FuelList.append(Fuel)
-        
+
         boost = self.meters[6]
         boost.setSpeed(Map)
         self.BoostList.append(Map)
@@ -425,5 +428,5 @@ class MainWindow(QMainWindow):
         rpm = self.meters[5]
         rpm.setSpeed(Rpm)
         self.RpmList.append(Rpm)
-        
+
         QTimer.singleShot(50, self.increment)
