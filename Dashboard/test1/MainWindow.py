@@ -30,16 +30,34 @@ Fuel = 0.0
 Rpm = 0
 Tps = 0
 dataList = []
+file_name = ''
 
 os.system("sudo /sbin/ip link set down can0")
 os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
 time.sleep(0.1)
 
+def get_last_file_number(directory):
+
+    import os, fnmatch
+    file_list = fnmatch.filter(os.listdir(directory), '*.csv')
+    file_list.sort()
+    if not file_list:
+        return '0'
+
+    last_file = file_list[-1]
+    filename_without_extension, extension = os.path.splitext(last_file)
+
+    data = filename_without_extension.split('_')
+    nb = int(data[1]) + 1
+    return nb
+
+last_number = get_last_file_number('/home/cve/dash/Dashboard/test1')
 headers = ['hh', 'Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
-csvfile =  open('my_data.csv', 'a', newline='')
+file_name = 'data_' +  str(last_number) + '.csv'
+csvfile =  open(file_name, 'w+', newline='')
 csv_writer = csv.writer(csvfile)
 csv_writer.writerow(headers)
-
+csvfile.flush()
 
 def decodeData(message):
 
@@ -359,24 +377,12 @@ class MainWindow(QMainWindow):
             csv_writer.writerow(headers)
             writer.writerows(lignes)    #csv_writer.writerows(zip(*data_arrays))
 
-    def fileWrite(self, data, name):
-
-        try:
-            f = open(name, 'w+')
-            for line in data:
-                f.writelines(str(line)+'\n')
-            f.close()
-
-        except:
-            print("Error writing file")
-
 
     def saveAll(self):
 
         headers = ['Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
-        self.write_to_csv('my_data.csv', [self.RpmList, self.TpsList, self.TempList, self.BoostList, self.AfrList, self.BattList, self.AirList, self.FuelList], headers)
+        self.write_to_csv(file_name, [self.RpmList, self.TpsList, self.TempList, self.BoostList, self.AfrList, self.BattList, self.AirList, self.FuelList], headers)
         print("save")
-        #self.fileWrite(self.TempList, "temp.txt") 
         return
 
     def openVE(self):
