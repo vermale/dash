@@ -31,6 +31,7 @@ Rpm = 0
 Tps = 0
 dataList = []
 file_name = ''
+nb = 0
 
 os.system("sudo /sbin/ip link set down can0")
 os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
@@ -48,11 +49,14 @@ def get_last_file_number(directory):
     filename_without_extension, extension = os.path.splitext(last_file)
 
     data = filename_without_extension.split('_')
-    nb = int(data[1]) + 1
-    return nb
+    if ( len(data) > 1 ):
+        nb = int(data[1]) + 1
+        return nb
+    else: 
+        return '0'
 
 last_number = get_last_file_number('/home/cve/dash/Dashboard/test1')
-headers = ['hh', 'Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
+headers = ['hh', 'Rpm', 'Tps', 'Temp', 'Boost', 'Afr1', 'Afr2', 'Volt', 'Air','Fuel']
 file_name = 'data_' +  str(last_number) + '.csv'
 csvfile =  open(file_name, 'w+', newline='')
 csv_writer = csv.writer(csvfile)
@@ -102,6 +106,7 @@ def decodeData(message):
 		Air = float((int(data[9:11],16)))*150/255-10
 
 def task():
+	global nb
 	if Rpm >0:
 		now = datetime.datetime.now()
 		formatted_time = now.strftime("%H:%M:%S:%f")[:-4]  # Remove the last 3 digits of microseconds
@@ -111,26 +116,28 @@ def task():
 		dataList.append(format(Temp,'.2f'))
 		dataList.append(format(Map,'.2f'))
 		dataList.append(format(Lambda1,'.2f'))
+		dataList.append(format(Lambda2,'.2f'))
 		dataList.append(format(Volt,'.2f'))
 		dataList.append(format(Air,'.2f'))
 		dataList.append(format(Fuel,'.2f'))
 		csv_writer.writerow(dataList)
-		csvfile.flush()
+		if ( nb > 100 ):
+			csvfile.flush()
+			nb =0
+		nb = nb + 1
 		dataList.clear()
 
 def can_rx_task():
 
-    nb = 0
-    bus = can.interface.Bus(channel='can0', bustype='socketcan', bitrate=500000)
-    print("init")
-    while True:
-        #if nb==10:
-        #     nb=0
-        task()
-        #nb = nb+1
-        message = bus.recv(24)
-        decodeData(message)
-        time.sleep(0.05)
+	bus = can.interface.Bus(channel='can0', bustype='socketcan', bitrate=500000)
+	print("init")
+	while True:
+		message = bus.recv(24)
+	if message is not none:
+		decodeData(message)
+		task()
+
+	time.sleep(0.1)
 
 t = Thread(target = can_rx_task)	# Start receive thread
 t.start()
@@ -157,16 +164,16 @@ def clickable(widget):
 class MainWindow(QMainWindow):
 
     nb= 0
-    TempList = []
-    AfrList = []
-    BoostList = []
-    BattList = []
-    AirList = []
-    FuelList = []
-    TpsList = []
-    RpmList = []
-    KmList = []
-    TempWin = pyplot
+    #TempList = []
+    #AfrList = []
+    #BoostList = []
+    #BattList = []
+    #AirList = []
+    #FuelList = []
+    #TpsList = []
+    #RpmList = []
+    #KmList = []
+    #TempWin = pyplot
     #tool = CanProtocol.CanTool()
     oldMess = ""
 
@@ -253,30 +260,30 @@ class MainWindow(QMainWindow):
         self.meters.append(tps)
         layout.addWidget(tps, 3, 8, 3, 3 )
 
-        self.BoostList.append(0)
-        self.BoostList.append(2)
-        self.AfrList.append(0)
-        self.AfrList.append(20)
-        self.TempList.append(-10)
-        self.TempList.append(130)
-        self.BattList.append(0)
-        self.BattList.append(18)
-        self.FuelList.append(0)
-        self.FuelList.append(150)
-        self.AirList.append(0)
-        self.AirList.append(150)
-        self.TpsList.append(0)
-        self.TpsList.append(100)
-        self.RpmList.append(0)
-        self.RpmList.append(7500)
-        self.KmList.append(0)
-        self.KmList.append(200)
+        #self.BoostList.append(0)
+        #self.BoostList.append(2)
+        #self.AfrList.append(0)
+        #self.AfrList.append(20)
+        #self.TempList.append(-10)
+        #self.TempList.append(130)
+        #self.BattList.append(0)
+        #self.BattList.append(18)
+        #self.FuelList.append(0)
+        #self.FuelList.append(150)
+        #self.AirList.append(0)
+        #self.AirList.append(150)
+        #self.TpsList.append(0)
+        #self.TpsList.append(100)
+        #self.RpmList.append(0)
+        #self.RpmList.append(7500)
+        #self.KmList.append(0)
+        #self.KmList.append(200)
 
         #filter = [{'can_id':0x300, 'can_mask': 0x00f }]
         #bus = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
 
         #self.showFullScreen()
-        QTimer.singleShot(50,self.increment)
+        QTimer.singleShot(500,self.increment)
 
     def addPushB(self,pos,icon, layout):
 
@@ -380,7 +387,7 @@ class MainWindow(QMainWindow):
 
     def saveAll(self):
 
-        headers = ['Rpm', 'Tps', 'Temp', 'Boost', 'Afr', 'Volt', 'Air','Fuel']
+        headers = ['Rpm', 'Tps', 'Temp', 'Boost', 'Afr1', 'Afr2', 'Volt', 'Air','Fuel']
         self.write_to_csv(file_name, [self.RpmList, self.TpsList, self.TempList, self.BoostList, self.AfrList, self.BattList, self.AirList, self.FuelList], headers)
         print("save")
         return
@@ -408,31 +415,20 @@ class MainWindow(QMainWindow):
 
         batt = self.meters[2]
         batt.setSpeed(Volt)
-        self.BattList.append(Volt)
-
         temp = self.meters[0]
         temp.setSpeed(Temp)
-        self.TempList.append(Temp)
         air = self.meters[3]
         air.setSpeed(Air)
-        self.AirList.append(Air)
-
         afr = self.meters[1]
         afr.setSpeed(Lambda1)
-        self.AfrList.append(Lambda1)
-
         fuel = self.meters[4]
         fuel.setSpeed(Fuel)
-        self.FuelList.append(Fuel)
-
         boost = self.meters[6]
         boost.setSpeed(Map)
-        self.BoostList.append(Map)
         tps = self.meters[7]
         tps.setSpeed(Tps)
-        self.TpsList.append(Tps)
         rpm = self.meters[5]
         rpm.setSpeed(Rpm)
-        self.RpmList.append(Rpm)
 
-        QTimer.singleShot(50, self.increment)
+        QTimer.singleShot(200, self.increment)
+
